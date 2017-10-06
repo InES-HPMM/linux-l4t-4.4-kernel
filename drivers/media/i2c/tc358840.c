@@ -1073,7 +1073,6 @@ static void tc358840_initial_setup(struct v4l2_subdev *sd)
 
 static void tc358840_format_change(struct v4l2_subdev *sd)
 {
-	struct tc358840_state *state = to_state(sd);
 	struct v4l2_dv_timings timings;
 	static const struct v4l2_event tc358840_ev_fmt = {
 		.type = V4L2_EVENT_SOURCE_CHANGE,
@@ -1085,12 +1084,11 @@ static void tc358840_format_change(struct v4l2_subdev *sd)
 
 		v4l2_info(sd, "%s: No Signal\n", __func__);
 	} else {
-		if (!v4l2_match_dv_timings(&state->timings, &timings, 0))
-			enable_stream(sd, false);
-
 		v4l2_print_dv_timings(sd->name,
 				"tc358840_format_change: New format: ",
 				&timings, false);
+
+		tc358840_s_dv_timings(sd, &timings);
 	}
 
 	/* Application gets notified after CSI Tx's are reset */
