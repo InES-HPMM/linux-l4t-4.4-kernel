@@ -2163,8 +2163,6 @@ static bool tc358840_parse_dt(struct tc358840_platform_data *pdata,
 static int tc358840_pwr_init(struct tc358840_platform_data *pdata,
 		struct i2c_client *client)
 {
-	struct device_node *node = client->dev.of_node;
-	int cam2_rst;
 	int err;
 	struct regulator *dvdd;
 	struct regulator *iovdd;
@@ -2172,41 +2170,29 @@ static int tc358840_pwr_init(struct tc358840_platform_data *pdata,
 	err = camera_common_regulator_get(client, &iovdd, "vif");
 	if (err < 0) {
 		dev_err(&client->dev, "cannot get regulator vif %d\n", err);
-		return -EINVAL;
+		return false;
 	}
 
 	err = camera_common_regulator_get(client, &dvdd, "vdig");
 	if (err < 0) {
 		dev_err(&client->dev, "cannot get regulator vdig %d\n", err);
-		return -EINVAL;
-	}
-
-	/*  cam2 rst */
-	cam2_rst = of_get_named_gpio(node, "cam2_rst", 0);
-	if (cam2_rst == 0)
 		return false;
-	err = gpio_request(cam2_rst, "cam2-rst");
-	if (err < 0)
-		dev_err(&client->dev,
-				"cam2 rst gpio request failed %d\n", err);
-
-	gpio_direction_output(cam2_rst, 1);
+	}
 
 	if (dvdd) {
 		err = regulator_enable(dvdd);
 		if (err < 0) {
 			dev_err(&client->dev, "cannot enable regulator vif %d\n", err);
-			return -EINVAL;
+			return false;
 		}
 	}
 	if (iovdd) {
 		err = regulator_enable(iovdd);
 		if (err < 0) {
 			dev_err(&client->dev, "cannot enable regulator vdig %d\n", err);
-			return -EINVAL;
+			return false;
 		}
 	}
-	gpio_direction_output(cam2_rst, 1);
 
 	return true;
 }
