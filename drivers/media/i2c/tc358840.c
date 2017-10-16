@@ -2360,7 +2360,7 @@ static int tc358840_probe(struct i2c_client *client, const struct i2c_device_id 
 	if (client->irq) {
 		err = devm_request_threaded_irq(&state->i2c_client->dev,
 						client->irq, NULL, tc358840_irq_handler,
-						IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+						IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 						sd->name, (void *)sd);
 		if (err) {
 			v4l2_err(sd, "Could not request interrupt %d!\n",
