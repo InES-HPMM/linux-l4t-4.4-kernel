@@ -713,18 +713,22 @@ enum {
 	TC358840_MODE_1280X720,
 };
 
-static const int tc358840_30fps[] = {
+static const int tc358840_24_25_30fps[] = {
+	24,
+	25,
 	30,
 };
 
-static const int tc358840_30_60fps[] = {
+static const int tc358840_24_25_30_60fps[] = {
+	24,
+	25,
 	30,
 	60,
 };
 
 static const struct camera_common_frmfmt tc358840_frmfmt[] = {
-	{{3840, 2160},	tc358840_30fps, 1, 1, TC358840_MODE_3840X2160},
-	{{1920, 1080},	tc358840_30_60fps, 2, 1, TC358840_MODE_1920X1080},
-	{{1280, 720},	tc358840_30_60fps, 2, 1, TC358840_MODE_1280X720},
+	{{3840, 2160},	tc358840_24_25_30fps, 3, 1, TC358840_MODE_3840X2160},
+	{{1920, 1080},	tc358840_24_25_30_60fps, 4, 1, TC358840_MODE_1920X1080},
+	{{1280, 720},	tc358840_24_25_30_60fps, 4, 1, TC358840_MODE_1280X720},
 };
 #endif  /* __TC358840_TABLES__ */
