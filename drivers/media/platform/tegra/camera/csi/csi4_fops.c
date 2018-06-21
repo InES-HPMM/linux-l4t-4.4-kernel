@@ -9,6 +9,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+#define DEBUG
 #include <linux/clk/tegra.h>
 #include <linux/of_graph.h>
 #include <linux/string.h>
@@ -115,6 +116,7 @@ static void csi4_phy_config(
 	/* Calculated clock settling times for cil and csi clocks */
 	unsigned int cil_settletime = 0;
 	unsigned int csi_settletime;
+	char *name = chan->sensor_sd->name;
 
 	dev_dbg(csi->dev, "%s\n", __func__);
 
@@ -123,7 +125,7 @@ static void csi4_phy_config(
 
 	/* read current NVCSI_CIL_CONFIG setting */
 	cil_config = csi4_phy_read(chan, phy_num, NVCSI_CIL_CONFIG);
-	dev_dbg(csi->dev, "NVCSI_CIL_CONFIG = %08x\n", cil_config);
+	dev_dbg(csi->dev, "Before NVCSI_CIL_CONFIG = %08x\n", cil_config);
 
 	if (cil_a) {
 		/* soft reset for data lane */
@@ -174,6 +176,10 @@ static void csi4_phy_config(
 				NVCSI_CIL_PAD_CONFIG, PDVCLAMP);
 	}
 
+	/* read current NVCSI_CIL_CONFIG setting */
+	cil_config = csi4_phy_read(chan, phy_num, NVCSI_CIL_CONFIG);
+	dev_dbg(csi->dev, "After NVCSI_CIL_CONFIG = %08x\n", cil_config);
+
 	if (!enable)
 		return;
 
@@ -183,6 +189,11 @@ static void csi4_phy_config(
 	/* Attempt to find the cil_settingtime from the device tree */
 	if (s_data) {
 		int idx = s_data->mode_prop_idx;
+
+		if(!strncmp("tc358840", name, 8)) {
+			cil_settletime = 0;
+			goto no_camera_data;
+		}
 
 		dev_dbg(csi->dev, "cil_settingtime is pulled from device");
 		if (idx < s_data->sensor_props.num_modes) {
@@ -210,6 +221,7 @@ static void csi4_phy_config(
 		}
 	}
 
+no_camera_data:
 	/* calculate MIPI settling times */
 	dev_dbg(csi->dev, "cil core clock: %u, csi clock: %u", cil_clk_mhz,
 		csi_clk_mhz);
@@ -337,7 +349,7 @@ static void csi4_cil_check_status(struct tegra_csi_channel *chan, int port_num)
 	struct tegra_csi_device *csi = chan->csi;
 	int status = 0;
 
-	dev_dbg(csi->dev, "%s %d\n", __func__, __LINE__);
+	dev_dbg(csi->dev, "%s", __func__);
 
 	status = csi4_stream_read(chan, port_num, CIL_INTR_STATUS);
 	if (status)

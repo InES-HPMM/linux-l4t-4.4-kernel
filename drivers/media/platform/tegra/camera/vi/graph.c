@@ -290,6 +290,7 @@ static int tegra_vi_graph_notify_bound(struct v4l2_async_notifier *notifier,
 	struct tegra_channel *chan =
 		container_of(notifier, struct tegra_channel, notifier);
 	struct tegra_vi_graph_entity *entity;
+	int bound_cnt=0;
 
 	/* Locate the entity corresponding to the bound subdev and store the
 	 * subdev pointer.
@@ -299,6 +300,9 @@ static int tegra_vi_graph_notify_bound(struct v4l2_async_notifier *notifier,
 			entity->node != subdev->of_node)
 			continue;
 
+		dev_err(chan->vi->dev, "bound_cnd %i", bound_cnt);
+		bound_cnt++;
+
 		if (entity->subdev) {
 			dev_err(chan->vi->dev, "duplicate subdev for node %s\n",
 				entity->node->full_name);
@@ -306,9 +310,11 @@ static int tegra_vi_graph_notify_bound(struct v4l2_async_notifier *notifier,
 		}
 
 		dev_info(chan->vi->dev, "subdev %s bound\n", subdev->name);
+
 		entity->entity = &subdev->entity;
 		entity->subdev = subdev;
 		chan->subdevs_bound++;
+		dev_err(chan->vi->dev, "after bound no crash");
 		return 0;
 	}
 
