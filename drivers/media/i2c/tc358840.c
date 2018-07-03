@@ -50,7 +50,7 @@
 #include <asm/barrier.h>
 
 
-static int debug = 1;
+static int debug = 2;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "debug level (0-3)");
 
@@ -128,7 +128,7 @@ struct tc358840_state {
 	struct workqueue_struct *work_queues;
 	struct delayed_work delayed_work_enable_hotplug;
 	struct delayed_work delayed_work_enable_interrupt;
-	struct work_struct process_isr;
+	//struct work_struct process_isr;
 	struct mutex isr_lock;
 
 	/* edid  */
@@ -151,6 +151,7 @@ static int tc358840_s_ctrl_detect_tx_5v(struct v4l2_subdev *sd);
 static void tc358840_init_interrupts(struct v4l2_subdev *sd);
 static int tc358840_s_dv_timings(
 	struct v4l2_subdev *sd, struct v4l2_dv_timings *timings);
+static int tc358840_log_status(struct v4l2_subdev *sd);
 static void tc358840_set_csi(struct v4l2_subdev *sd);
 static void tc358840_set_splitter(struct v4l2_subdev *sd);
 static int tc358840_s_edid(struct v4l2_subdev *sd,
@@ -1093,6 +1094,8 @@ static void tc358840_format_change(struct v4l2_subdev *sd)
 				&timings, true); // true detailed timings
 	}
 
+	tc358840_log_status(sd);
+
 	/* Application gets notified after CSI Tx's are reset */
 	if (sd->devnode)
 		v4l2_subdev_notify_event(sd, &tc358840_ev_fmt);
@@ -1421,7 +1424,7 @@ retry:
 	return 0;
 }
 
-static void tc358840_process_isr(struct work_struct *work)
+/*static void tc358840_process_isr(struct work_struct *work)
 {
 	struct tc358840_state *state = container_of(work,
 		struct tc358840_state, process_isr);
@@ -1433,14 +1436,19 @@ static void tc358840_process_isr(struct work_struct *work)
 	mutex_lock(&state->isr_lock);
 	tc358840_isr(sd, 0, &handled);
 	mutex_unlock(&state->isr_lock);
-}
+}*/
 
 static irqreturn_t tc358840_irq_handler(int irq, void *dev_id)
 {
 	struct v4l2_subdev *sd = dev_id;
 	struct tc358840_state *state = to_state(sd);
+	bool handled;
 
-	queue_work(state->work_queues, &state->process_isr);
+	//queue_work(state->work_queues, &state->process_isr);
+
+	mutex_lock(&state->isr_lock);
+	tc358840_isr(sd, 0, &handled);
+	mutex_unlock(&state->isr_lock);
 
 	return IRQ_HANDLED;
 }
@@ -1809,6 +1817,8 @@ static int tc358840_log_status(struct v4l2_subdev *sd)
 		"RGB", "YCbCr 601", "Adobe RGB", "YCbCr 709", "NA (4)",
 		"xvYCC 601", "NA(6)", "xvYCC 709", "NA(8)", "sYCC601",
 		"NA(10)", "NA(11)", "NA(12)", "Adobe YCC 601"};
+
+	v4l2_dbg(1, debug, sd, "%s():\n", __func__);
 
 	v4l2_ctrl_subdev_log_status(sd);
 	v4l2_info(sd, "-----Chip status-----\n");
@@ -2309,6 +2319,8 @@ static int tc358840_probe(struct i2c_client *client, const struct i2c_device_id 
 
 	v4l2_i2c_subdev_init(sd, client, &tc358840_ops);
 
+
+
 	dev_err(&client->dev,"Bevore GPIO check\n");
 
 	/* Release System Reset (pin K8) */
@@ -2382,7 +2394,7 @@ static int tc358840_probe(struct i2c_client *client, const struct i2c_device_id 
 			tc358840_delayed_work_enable_hotplug);
 	INIT_DELAYED_WORK(&state->delayed_work_enable_interrupt,
 			tc358840_delayed_work_enable_interrupt);
-	INIT_WORK(&state->process_isr, tc358840_process_isr);
+	//INIT_WORK(&state->process_isr, tc358840_process_isr);
 	mutex_init(&state->isr_lock);
 
 	/* Initial Setup */
@@ -2395,7 +2407,7 @@ static int tc358840_probe(struct i2c_client *client, const struct i2c_device_id 
 	if (client->irq) {
 		err = devm_request_threaded_irq(&state->i2c_client->dev,
 						client->irq, NULL, tc358840_irq_handler,
-						IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+						IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 						sd->name, (void *)sd);
 		if (err) {
 			v4l2_err(sd, "Could not request interrupt %d!\n",

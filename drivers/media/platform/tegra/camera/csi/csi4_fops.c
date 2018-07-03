@@ -176,9 +176,10 @@ static void csi4_phy_config(
 				NVCSI_CIL_PAD_CONFIG, PDVCLAMP);
 	}
 
-	/* read current NVCSI_CIL_CONFIG setting */
-	cil_config = csi4_phy_read(chan, phy_num, NVCSI_CIL_CONFIG);
-	dev_dbg(csi->dev, "After NVCSI_CIL_CONFIG = %08x\n", cil_config);
+    cil_config = csi4_phy_read(chan, phy_num, NVCSI_CIL_CONFIG);
+	dev_dbg(csi->dev, "After Read NVCSI_CIL_CONFIG = %08x enable = %x\n", cil_config, enable);
+
+
 
 	if (!enable)
 		return;
@@ -297,6 +298,12 @@ no_camera_data:
 		/* release soft reset */
 		csi4_phy_write(chan, phy_num, NVCSI_CIL_B_SW_RESET, 0x0);
 	}
+
+	/* read current NVCSI_CIL_CONFIG setting */
+	cil_config = csi4_phy_read(chan, phy_num, NVCSI_CIL_CONFIG);
+	dev_dbg(csi->dev, "After NVCSI_CIL_CONFIG = %08x\n", cil_config);
+
+
 }
 
 static void csi4_stream_check_status(

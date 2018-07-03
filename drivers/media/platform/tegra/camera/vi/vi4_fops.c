@@ -908,11 +908,7 @@ int vi4_channel_start_streaming(struct vb2_queue *vq, u32 count)
 		return ret;
 	}
 
-	dev_err(&chan->video.dev,"befor vi4 init\n");
-
 	vi4_init(chan);
-
-	dev_err(&chan->video.dev,"After vi4 init\n");
 
 	spin_lock_irqsave(&chan->capture_state_lock, flags);
 	chan->capture_state = CAPTURE_IDLE;
