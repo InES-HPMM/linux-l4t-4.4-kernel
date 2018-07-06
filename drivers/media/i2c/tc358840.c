@@ -48,7 +48,7 @@
 #include <asm/barrier.h>
 
 
-static int debug = 2;
+static int debug = 0;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "debug level (0-3)");
 
@@ -1093,8 +1093,8 @@ static void tc358840_format_change(struct v4l2_subdev *sd)
 		tc358840_s_dv_timings(sd, &timings);
 
 		v4l2_print_dv_timings(sd->name,
-				"tc358840_format_change: New format: ",
-				&timings, true); // true detailed timings
+				"tc358840_format_change(): New format: ",
+				&timings, false); // true detailed timings
 	}
 
 	/* Application gets notified after CSI Tx's are reset */
