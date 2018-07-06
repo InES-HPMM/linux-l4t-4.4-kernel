@@ -9,7 +9,6 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-#define DEBUG
 #include <linux/clk/tegra.h>
 #include <linux/of_graph.h>
 #include <linux/string.h>
@@ -177,8 +176,6 @@ static void csi4_phy_config(
 	}
 
     cil_config = csi4_phy_read(chan, phy_num, NVCSI_CIL_CONFIG);
-	dev_dbg(csi->dev, "After Read NVCSI_CIL_CONFIG = %08x enable = %x\n", cil_config, enable);
-
 
 
 	if (!enable)
@@ -299,10 +296,6 @@ no_camera_data:
 		csi4_phy_write(chan, phy_num, NVCSI_CIL_B_SW_RESET, 0x0);
 	}
 
-	/* read current NVCSI_CIL_CONFIG setting */
-	cil_config = csi4_phy_read(chan, phy_num, NVCSI_CIL_CONFIG);
-	dev_dbg(csi->dev, "After NVCSI_CIL_CONFIG = %08x\n", cil_config);
-
 
 }
 
@@ -312,7 +305,6 @@ static void csi4_stream_check_status(
 	struct tegra_csi_device *csi = chan->csi;
 	int status = 0;
 
-	dev_dbg(csi->dev, "%s\n", __func__);
 	if (!chan->pg_mode) {
 		status = csi4_stream_read(chan, port_num, ERROR_STATUS2VI_VC0);
 		if (status)
@@ -356,8 +348,6 @@ static void csi4_cil_check_status(struct tegra_csi_channel *chan, int port_num)
 	struct tegra_csi_device *csi = chan->csi;
 	int status = 0;
 
-	dev_dbg(csi->dev, "%s", __func__);
-
 	status = csi4_stream_read(chan, port_num, CIL_INTR_STATUS);
 	if (status)
 		dev_err(csi->dev,
@@ -395,7 +385,6 @@ static void csi4_tpg_stop_streaming(struct tegra_csi_channel *chan,
 	unsigned int csi_port = chan->ports[ports_index].num;
 	struct tegra_csi_device *csi = chan->csi;
 
-	dev_dbg(csi->dev, "%s\n", __func__);
 	csi4_stream_check_status(chan, csi_port);
 	csi4_cil_check_status(chan, csi_port);
 	csi4_stream_write(chan, csi_port, PP_EN_CTRL, 0);
@@ -570,7 +559,6 @@ int csi4_mipi_cal(struct tegra_csi_channel *chan)
 	port = 0;
 	while (num_ports < chan->numports) {
 		port = chan->ports[num_ports].num;
-		dev_dbg(csi->dev, "csi port:%d\n", port);
 
 		if (chan->numlanes == 2) {
 			lanes |= CSIA << port;

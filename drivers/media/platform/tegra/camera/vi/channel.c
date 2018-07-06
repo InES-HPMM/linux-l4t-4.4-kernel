@@ -9,7 +9,6 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-
 #include <linux/atomic.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
@@ -1241,7 +1240,6 @@ int tegra_channel_init_subdevices(struct tegra_channel *chan)
 		if (!(pad->flags & MEDIA_PAD_FL_SINK))
 			break;
 
-		dev_err(sd->dev, "bevore media entity remote pad");
 		pad = media_entity_remote_pad(pad);
 		if (pad == NULL ||
 		    media_entity_type(pad->entity) != MEDIA_ENT_T_V4L2_SUBDEV)
@@ -1263,7 +1261,6 @@ int tegra_channel_init_subdevices(struct tegra_channel *chan)
 	}
 
 
-	dev_err(sd->dev, "after while SHIAT");
 
 	chan->num_subdevs = num_sd;
 	/*
@@ -1276,12 +1273,10 @@ int tegra_channel_init_subdevices(struct tegra_channel *chan)
 	if (chan->num_subdevs)
 		tegra_channel_fmts_bitmap_init(chan);
 
-	dev_err(sd->dev, "after bitmap");
 
 	chan->hdmiin = v4l2_subdev_has_op(chan->subdev_on_csi,
 				video, s_dv_timings);
 
-	
 	ret = tegra_channel_setup_controls(chan);
 	if (ret < 0) {
 		dev_err(chan->vi->dev, "%s: failed to setup controls\n",
@@ -1297,7 +1292,6 @@ int tegra_channel_init_subdevices(struct tegra_channel *chan)
 			chan->pg_mode)
 		return 0;
 
-	dev_err(sd->dev, "before channel sensor_control_properties");
 
 	if(!strncmp("tc358840", sd->name, 8))
 		goto no_camera_data;
@@ -1308,8 +1302,6 @@ int tegra_channel_init_subdevices(struct tegra_channel *chan)
 			__func__);
 		goto fail;
 	}
-	
-	dev_err(sd->dev, "before connect sensor or channel");
 
 no_camera_data:
 	/* Add a link for the camera_common_data in the tegra_csi_channel. */

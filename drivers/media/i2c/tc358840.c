@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define DEBUG
-
 #include <linux/module.h>
 
 #include <linux/i2c.h>
@@ -624,6 +622,8 @@ static int enable_stream(struct v4l2_subdev *sd, bool enable)
 	struct tc358840_platform_data *pdata = &state->pdata;
 
 	u32 sync_timeout_ctr;
+	u16 base_addr;
+	enum tc358840_csi_port port;
 
 	v4l2_dbg(2, debug, sd, "%s: %sable\n", __func__, enable ? "en" : "dis");
 
@@ -631,23 +631,26 @@ static int enable_stream(struct v4l2_subdev *sd, bool enable)
 		return 0;
 
 	if (enable) {
-#if 0		/* Wait until we can use the clock-noncontinuous property */
-		if (pdata->endpoint.bus.mipi_csi2.flags &
-		    V4L2_MBUS_CSI2_NONCONTINUOUS_CLOCK) {
-			i2c_wr32_and_or(sd, FUNCMODE, ~(MASK_CONTCLKMODE),
-					MASK_FORCESTOP);
-		} else {
+
+		/*i2c_wr32_and_or(sd, FUNCMODE, ~(MASK_CONTCLKMODE),
+				MASK_FORCESTOP);*/
+
+				/*
+		 * Workaround: The TC358840 chip stops working after 7 lines
+		 * in non-continuous clock mode. Thus, always use continuous
+		 * clock.
+		 */
+		for (port = CSI_TX_0; port <= CSI_TX_1; port++) {
+			base_addr = (port == CSI_TX_0) ? CSITX0_BASE_ADDR :
+							 CSITX1_BASE_ADDR;
+
 			/* It is critical for CSI receiver to see lane transition
 			 * LP11->HS. Set to non-continuous mode to enable clock lane
 			 * LP11 state. */
-			i2c_wr32_and_or(sd, FUNCMODE, ~(MASK_CONTCLKMODE), 0);
+			i2c_wr32_and_or(sd, base_addr + FUNCMODE, ~(MASK_CONTCLKMODE), 0);
 			/* Set to continuous mode to trigger LP11->HS transition */
-			i2c_wr32_and_or(sd, FUNCMODE, 0, MASK_CONTCLKMODE);
+			i2c_wr32_and_or(sd, base_addr + FUNCMODE, 0, MASK_CONTCLKMODE);
 		}
-#else
-		i2c_wr32_and_or(sd, FUNCMODE, ~(MASK_CONTCLKMODE),
-				MASK_FORCESTOP);
-#endif
 		/* Unmute video */
 		i2c_wr8(sd, VI_MUTE, MASK_AUTO_MUTE);
 		/* Signal end of initialization */
@@ -1094,8 +1097,6 @@ static void tc358840_format_change(struct v4l2_subdev *sd)
 				&timings, true); // true detailed timings
 	}
 
-	tc358840_log_status(sd);
-
 	/* Application gets notified after CSI Tx's are reset */
 	if (sd->devnode)
 		v4l2_subdev_notify_event(sd, &tc358840_ev_fmt);
@@ -1424,19 +1425,6 @@ retry:
 	return 0;
 }
 
-/*static void tc358840_process_isr(struct work_struct *work)
-{
-	struct tc358840_state *state = container_of(work,
-		struct tc358840_state, process_isr);
-	struct v4l2_subdev *sd = &state->sd;
-	bool handled;
-
-	v4l2_dbg(2, debug, sd, "%s:\n", __func__);
-
-	mutex_lock(&state->isr_lock);
-	tc358840_isr(sd, 0, &handled);
-	mutex_unlock(&state->isr_lock);
-}*/
 
 static irqreturn_t tc358840_irq_handler(int irq, void *dev_id)
 {
