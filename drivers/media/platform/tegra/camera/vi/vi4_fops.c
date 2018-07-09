@@ -892,14 +892,9 @@ int vi4_channel_start_streaming(struct vb2_queue *vq, u32 count)
 	unsigned int emb_buf_size = 0;
 	char *name = chan->subdev_on_csi->name;
 
-
-	dev_err(&chan->video.dev,"In channel start streamig\n");
-
 	ret = media_entity_pipeline_start(&chan->video.entity, pipe);
 	if (ret < 0)
 		goto error_pipeline_start;
-
-	dev_err(&chan->video.dev,"After media_entity_pipeline_start\n");
 
 	if (chan->bypass) {
 		ret = tegra_channel_set_stream(chan, true);
@@ -928,7 +923,6 @@ int vi4_channel_start_streaming(struct vb2_queue *vq, u32 count)
 			return -EINVAL;
 		}
 
-		dev_err(&chan->video.dev,"Befor get proporties from DT\n");
 		/* get sensor properties from DT */
 		if (node != NULL) {
 			int idx = s_data->mode_prop_idx;
@@ -952,7 +946,6 @@ int vi4_channel_start_streaming(struct vb2_queue *vq, u32 count)
 			}
 		}
 
-		dev_err(&chan->video.dev,"Befor get proporties from DT\n");
 
 		/* Allocate buffer for Embedded Data if need to*/
 		if (emb_buf_size > chan->vi->emb_buf_size) {
@@ -980,7 +973,6 @@ int vi4_channel_start_streaming(struct vb2_queue *vq, u32 count)
 			}
 			chan->vi->emb_buf_size = emb_buf_size;
 		}
-		dev_err(&chan->video.dev,"After allocate buffer\n");
 	}
 
 no_camera_data:

@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include <linux/module.h>
 
 #include <linux/i2c.h>
@@ -48,7 +49,7 @@
 #include <asm/barrier.h>
 
 
-static int debug = 0;
+static int debug;
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "debug level (0-3)");
 
@@ -126,7 +127,6 @@ struct tc358840_state {
 	struct workqueue_struct *work_queues;
 	struct delayed_work delayed_work_enable_hotplug;
 	struct delayed_work delayed_work_enable_interrupt;
-	//struct work_struct process_isr;
 	struct mutex isr_lock;
 
 	/* edid  */
@@ -1080,8 +1080,6 @@ static void tc358840_format_change(struct v4l2_subdev *sd)
 		.u.src_change.changes = V4L2_EVENT_SRC_CH_RESOLUTION,
 	};
 
-
-
 	if (tc358840_get_detected_timings(sd, &timings)) {
 		enable_stream(sd, false);
 
@@ -1431,8 +1429,6 @@ static irqreturn_t tc358840_irq_handler(int irq, void *dev_id)
 	struct v4l2_subdev *sd = dev_id;
 	struct tc358840_state *state = to_state(sd);
 	bool handled;
-
-	//queue_work(state->work_queues, &state->process_isr);
 
 	mutex_lock(&state->isr_lock);
 	tc358840_isr(sd, 0, &handled);
@@ -1806,8 +1802,6 @@ static int tc358840_log_status(struct v4l2_subdev *sd)
 		"xvYCC 601", "NA(6)", "xvYCC 709", "NA(8)", "sYCC601",
 		"NA(10)", "NA(11)", "NA(12)", "Adobe YCC 601"};
 
-	v4l2_dbg(1, debug, sd, "%s():\n", __func__);
-
 	v4l2_ctrl_subdev_log_status(sd);
 	v4l2_info(sd, "-----Chip status-----\n");
 	v4l2_info(sd, "Chip ID: 0x%02x\n",
@@ -2066,8 +2060,6 @@ static bool tc358840_parse_dt(struct tc358840_platform_data *pdata,
 	struct device_node *node = client->dev.of_node;
 	const u32 *property;
 
-	dev_err(&client->dev,"Device tree parse\n");
-
 	v4l_dbg(1, debug, client, "Device Tree Parameters:\n");
 
 	pdata->reset_gpio = of_get_named_gpio(node, "reset-gpios", 0);
@@ -2183,13 +2175,9 @@ static bool tc358840_parse_dt(struct tc358840_platform_data *pdata,
 static int tc358840_pwr_init(struct tc358840_platform_data *pdata,
 		struct i2c_client *client)
 {
-	//struct device_node *node = client->dev.of_node;
-	//int cam2_rst;
 	int err;
 	struct regulator *dvdd;
 	struct regulator *iovdd;
-
-	dev_err(&client->dev,"In tc358840 pwr init\n");
 
 	err = camera_common_regulator_get(&client->dev, &iovdd, "vif");
 	if (err < 0) {
@@ -2202,19 +2190,6 @@ static int tc358840_pwr_init(struct tc358840_platform_data *pdata,
 		dev_err(&client->dev, "cannot get regulator vdig %d\n", err);
 		return -EINVAL;
 	}
-	/* comment out, to try if driver is working */
-	// /*  cam2 rst */
-	// cam2_rst = of_get_named_gpio(node, "cam2_rst", 0);
-	// if (cam2_rst == 0)
-	// 	return false;
-	// err = gpio_request(cam2_rst, "cam2-rst");
-	// if (err < 0)
-	// 	dev_err(&client->dev,
-	// 			"cam2 rst gpio request failed %d\n", err);
-
-	// dev_err(&client->dev,"After get name gpio,request\n");
-
-	// gpio_direction_output(cam2_rst, 1);
 
 	if (dvdd) {
 		err = regulator_enable(dvdd);
@@ -2230,8 +2205,6 @@ static int tc358840_pwr_init(struct tc358840_platform_data *pdata,
 			return -EINVAL;
 		}
 	}
-	/* comment out, to try if driver is working */
-	//gpio_direction_output(cam2_rst, 1);
 
 	return true;
 }
@@ -2276,9 +2249,6 @@ static int tc358840_probe(struct i2c_client *client, const struct i2c_device_id 
 	struct v4l2_subdev *sd;
 	int err;
 
-
-
-    dev_err(&client->dev,"TC358840 probe\n");
 	state = devm_kzalloc(&client->dev, sizeof(struct tc358840_state), GFP_KERNEL);
 	if (!state)
 		return -ENOMEM;
@@ -2307,10 +2277,6 @@ static int tc358840_probe(struct i2c_client *client, const struct i2c_device_id 
 
 	v4l2_i2c_subdev_init(sd, client, &tc358840_ops);
 
-
-
-	dev_err(&client->dev,"Bevore GPIO check\n");
-
 	/* Release System Reset (pin K8) */
 	v4l2_info(sd, "Releasing System Reset (gpio 0x%04X)\n",
 		state->pdata.reset_gpio);
@@ -2318,9 +2284,6 @@ static int tc358840_probe(struct i2c_client *client, const struct i2c_device_id 
 		v4l_err(client, "Reset GPIO is invalid!\n");
 		return state->pdata.reset_gpio;
 	}
-
-	dev_err(&client->dev,"After GPIO check\n");
-
 	err = devm_gpio_request_one(&client->dev, state->pdata.reset_gpio,
 					GPIOF_OUT_INIT_HIGH, "tc358840-reset");
 	if (err) {
@@ -2329,7 +2292,6 @@ static int tc358840_probe(struct i2c_client *client, const struct i2c_device_id 
 			state->pdata.reset_gpio, err);
 		return err;
 	}
-	dev_err(&client->dev,"After GPIO check\n");
 
 	/*  */
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
@@ -2382,7 +2344,7 @@ static int tc358840_probe(struct i2c_client *client, const struct i2c_device_id 
 			tc358840_delayed_work_enable_hotplug);
 	INIT_DELAYED_WORK(&state->delayed_work_enable_interrupt,
 			tc358840_delayed_work_enable_interrupt);
-	//INIT_WORK(&state->process_isr, tc358840_process_isr);
+
 	mutex_init(&state->isr_lock);
 
 	/* Initial Setup */

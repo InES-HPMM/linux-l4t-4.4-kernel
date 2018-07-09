@@ -124,7 +124,7 @@ static void csi4_phy_config(
 
 	/* read current NVCSI_CIL_CONFIG setting */
 	cil_config = csi4_phy_read(chan, phy_num, NVCSI_CIL_CONFIG);
-	dev_dbg(csi->dev, "Before NVCSI_CIL_CONFIG = %08x\n", cil_config);
+	dev_dbg(csi->dev, "NVCSI_CIL_CONFIG = %08x\n", cil_config);
 
 	if (cil_a) {
 		/* soft reset for data lane */
@@ -174,9 +174,6 @@ static void csi4_phy_config(
 			csi4_phy_write(chan, phy_num,
 				NVCSI_CIL_PAD_CONFIG, PDVCLAMP);
 	}
-
-    cil_config = csi4_phy_read(chan, phy_num, NVCSI_CIL_CONFIG);
-
 
 	if (!enable)
 		return;
@@ -295,8 +292,6 @@ no_camera_data:
 		/* release soft reset */
 		csi4_phy_write(chan, phy_num, NVCSI_CIL_B_SW_RESET, 0x0);
 	}
-
-
 }
 
 static void csi4_stream_check_status(
@@ -305,6 +300,7 @@ static void csi4_stream_check_status(
 	struct tegra_csi_device *csi = chan->csi;
 	int status = 0;
 
+	dev_dbg(csi->dev, "%s\n", __func__);
 	if (!chan->pg_mode) {
 		status = csi4_stream_read(chan, port_num, ERROR_STATUS2VI_VC0);
 		if (status)
@@ -348,6 +344,8 @@ static void csi4_cil_check_status(struct tegra_csi_channel *chan, int port_num)
 	struct tegra_csi_device *csi = chan->csi;
 	int status = 0;
 
+	dev_dbg(csi->dev, "%s %d\n", __func__, __LINE__);
+
 	status = csi4_stream_read(chan, port_num, CIL_INTR_STATUS);
 	if (status)
 		dev_err(csi->dev,
@@ -385,6 +383,7 @@ static void csi4_tpg_stop_streaming(struct tegra_csi_channel *chan,
 	unsigned int csi_port = chan->ports[ports_index].num;
 	struct tegra_csi_device *csi = chan->csi;
 
+	dev_dbg(csi->dev, "%s\n", __func__);
 	csi4_stream_check_status(chan, csi_port);
 	csi4_cil_check_status(chan, csi_port);
 	csi4_stream_write(chan, csi_port, PP_EN_CTRL, 0);
@@ -559,6 +558,7 @@ int csi4_mipi_cal(struct tegra_csi_channel *chan)
 	port = 0;
 	while (num_ports < chan->numports) {
 		port = chan->ports[num_ports].num;
+		dev_dbg(csi->dev, "csi port:%d\n", port);
 
 		if (chan->numlanes == 2) {
 			lanes |= CSIA << port;

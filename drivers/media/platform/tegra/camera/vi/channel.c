@@ -9,6 +9,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+
 #include <linux/atomic.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
@@ -1218,8 +1219,6 @@ int tegra_channel_init_subdevices(struct tegra_channel *chan)
 	int grp_id = chan->pg_mode ? (TPG_CSI_GROUP_ID + chan->port[0] + 1)
 		: chan->port[0] + 1;
 
-	
-
 	/* set_stream of CSI */
 	pad = media_entity_remote_pad(&chan->pad);
 	if (!pad)
@@ -1259,9 +1258,6 @@ int tegra_channel_init_subdevices(struct tegra_channel *chan)
 
 		index = pad->index - 1;
 	}
-
-
-
 	chan->num_subdevs = num_sd;
 	/*
 	 * Each CSI channel has only one final remote source,
@@ -1272,7 +1268,6 @@ int tegra_channel_init_subdevices(struct tegra_channel *chan)
 	/* initialize the available formats */
 	if (chan->num_subdevs)
 		tegra_channel_fmts_bitmap_init(chan);
-
 
 	chan->hdmiin = v4l2_subdev_has_op(chan->subdev_on_csi,
 				video, s_dv_timings);

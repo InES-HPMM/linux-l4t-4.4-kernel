@@ -9,6 +9,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>
@@ -187,20 +188,15 @@ static int tegra_csi_s_stream(struct v4l2_subdev *subdev, int enable)
 			ret = tegra_csi_start_streaming(chan, i);
 			if (ret)
 				goto start_fail;
-		} else{
-			dev_dbg(csi->dev, "%s normal port=%d\n",__func__, i);
+		} else
 			tegra_csi_stop_streaming(chan, i);
-		}
 	}
 	atomic_set(&chan->is_streaming, enable);
 	return ret;
 start_fail:
-	dev_dbg(csi->dev,"start_fail update_video_source");
 	update_video_source(csi, 0, chan->pg_mode);
-	for (i = 0; i < tegra_chan->valid_ports; i++){
-		dev_dbg(csi->dev, "%s start_fail port=%d\n",__func__, i);
+	for (i = 0; i < tegra_chan->valid_ports; i++)
 		tegra_csi_stop_streaming(chan, i);
-	}
 	return ret;
 }
 
