@@ -527,8 +527,10 @@ static int tegra_channel_capture_frame(struct tegra_channel *chan,
 
 		chan->capture_version = restart_version;
 		err = tegra_channel_set_stream(chan, true);
-		if (err < 0)
+		if (err < 0) {
+			release_buffer(chan, buf);
 			return err;
+		}
 	}
 
 	for (i = 0; i < chan->valid_ports; i++) {
